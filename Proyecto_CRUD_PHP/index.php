@@ -29,13 +29,15 @@ session_start(); // Iniciar sesión para acceder a $_SESSION
             echo '</br>';
             echo '<a href="vista/lista_eventos.php" class="btn btn-primary">CRUD de Eventos</a>';
             echo '</br>';
+            echo '<a href="vista/lista_eventos.php" class="btn btn-primary">CRUD de Usuarios</a>';
+            echo '</br>';
             echo '<a href="vista/cerrar_sesion.php" class="btn btn-primary">Cerrar Sesion</a>';
         }
         // Si el usuario es normal, mostrar opciones de usuario
         else {
-            echo '<a href="vista/lista_socios.php" class="btn btn-primary">Usuario 1</a> ';
+            echo '<a href="vista/lista_socios.php" class="btn btn-primary">CRUD de Socios</a> ';
             echo '</br>';
-            echo '<a href="vista/lista_eventos.php" class="btn btn-primary">Usuario 2</a>';
+            echo '<a href="vista/lista_eventos.php" class="btn btn-primary">CRUD de Eventos</a>';
             echo '</br>';
             echo '<a href="vista/cerrar_sesion.php" class="btn btn-primary">Cerrar Sesion</a>';
         }
