@@ -1,10 +1,16 @@
 <?php
-session_start(); // Iniciar sesión
+session_start();
 
-// Verifico si el usuario está logueado
+// Verifica si el usuario está logueado
 if (!isset($_SESSION['id_usuario'])) {
-    session_destroy(); // Cierro la sesión por seguridad
-    header("Location: ../index.php");  // Redirijo al login si no está logueado
+    session_destroy();
+    header("Location: ../index.php");
+    exit();
+}
+
+// Verifica si el usuario tiene el rol adecuado
+if ($_SESSION['rol'] !== 'admin') {
+    header("Location: ../index.php");
     exit();
 }
 require_once '../controlador/UsuarioController.php';
