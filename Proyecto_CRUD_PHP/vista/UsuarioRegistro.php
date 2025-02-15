@@ -10,9 +10,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $nombre = $_POST['nombre'];
     $correo = $_POST['correo'];
     $contraseña = $_POST['password'];
+    $rol = NULL;
 
     // Intento agregar un nuevo usuario con los datos proporcionados
-    $usuario = $controller->agregarUsuario($nombre, $correo, $contraseña);
+    $usuario = $controller->agregarUsuario($nombre, $correo, $contraseña, $rol);
 
     if (!$usuario) {
         // Si el proceso falla, muestro un mensaje de error

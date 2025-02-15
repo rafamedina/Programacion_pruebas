@@ -1,5 +1,4 @@
 Me queda implementar en usuarios(
-~ Ver todos los usuarios
 ~ Agregar nuevos usuarios
 ~ Editar todos los usuarios
 ~ Eliminar todos los usuarios

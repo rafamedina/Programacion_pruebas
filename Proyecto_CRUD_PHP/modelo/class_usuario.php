@@ -40,7 +40,7 @@ class Usuario
         return $fila['total']; // Devuelve el número total de usuarios en la base de datos
     }
 
-    public function agregarUsuario($nombre, $correo, $contraseña)
+    public function agregarUsuario($nombre, $correo, $contraseña, $rol)
     {
         $id_usuario = $this->ComprobarCorreo($correo);
         if ($id_usuario !== null) {
@@ -51,7 +51,9 @@ class Usuario
         $contraseñaHashed = password_hash($contraseña, PASSWORD_DEFAULT);
 
         // Si no hay usuarios, el primero será admin
-        $rol = ($this->contarUsuarios() == 0) ? 'admin' : 'user';
+        if ($rol == null){
+            $rol = ($this->contarUsuarios() == 0) ? 'admin' : 'user';}
+    
 
         // Insertar el usuario con el rol determinado
         $query = "INSERT INTO Usuarios (nombre, correo, password, rol) VALUES (?, ?, ?, ?)";
@@ -128,4 +130,16 @@ class Usuario
 
         return $usuario; // Devuelve los datos del usuario si la autenticación es correcta
     }
+    public function ListarUsuarios()
+    {
+        $query = "SELECT * FROM Usuarios";
+        $resultado = $this->conexion->conexion->query($query);
+        $socios = [];
+        while ($fila = $resultado->fetch_assoc()) {
+            $socios[] = $fila;
+        }
+        return $socios;
+    }
+
+   
 }
