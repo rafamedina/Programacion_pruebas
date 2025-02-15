@@ -14,17 +14,18 @@ session_start(); // Iniciar sesión para acceder a $_SESSION
 
 <body>
     <div class="container">
-        <h1 class="mt-4">Menú Principal</h1>
 
         <?php
         // Si no hay usuario en sesión, mostrar botones de inicio y registro
         if (!isset($_SESSION['id_usuario'])) {
+            echo '<h1 class="mt-4">Bienvenido</h1>';
             echo '<a href="vista/UsuarioInicioSesion.php" class="btn btn-primary">Iniciar Sesión</a> ';
             echo '</br>';
             echo '<a href="vista/UsuarioRegistro.php" class="btn btn-secondary">Registrarse</a>';
         }
         // Si el usuario tiene rol de admin, mostrar opciones de administración
         elseif ($_SESSION['rol'] === 'admin') {
+            echo '<h1 class="mt-4">Vista de Admin</h1>';
             echo '<a href="vista/lista_socios.php" class="btn btn-primary">CRUD de Socios</a> ';
             echo '</br>';
             echo '<a href="vista/lista_eventos.php" class="btn btn-primary">CRUD de Eventos</a>';
@@ -35,6 +36,7 @@ session_start(); // Iniciar sesión para acceder a $_SESSION
         }
         // Si el usuario es normal, mostrar opciones de usuario
         else {
+            echo '<h1 class="mt-4">Vista de Usuario</h1>';
             echo '<a href="vista/lista_socios.php" class="btn btn-primary">CRUD de Socios</a> ';
             echo '</br>';
             echo '<a href="vista/lista_eventos.php" class="btn btn-primary">CRUD de Eventos</a>';

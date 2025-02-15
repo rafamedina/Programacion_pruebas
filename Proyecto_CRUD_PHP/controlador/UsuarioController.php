@@ -33,4 +33,7 @@ class UsuarioController
     public function actualizarUsuario($idusuario, $nombre, $email, $rol){
         return $this->modelo->actualizarUsuario($idusuario, $nombre, $email, $rol);
     }
+    public function eliminarUsuario($id_Usuario){
+        return $this->modelo->eliminarUsuario($id_Usuario);
+    }
 }

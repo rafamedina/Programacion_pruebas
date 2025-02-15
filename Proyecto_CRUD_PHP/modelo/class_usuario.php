@@ -156,4 +156,19 @@ class Usuario
 
         $stmt->close();
     }
+    public function eliminarUsuario($id_Usuario)
+    {
+        $query = "DELETE FROM Usuarios WHERE id_usuario = ?";
+        $stmt = $this->conexion->conexion->prepare($query);
+        $stmt->bind_param("i", $id_Usuario);
+
+        if ($stmt->execute()) {
+            return true;
+        } else {
+            error_log("Error al eliminar Usuario: " . $stmt->error);
+            return false;
+        }
+
+        $stmt->close();
+    }
 }

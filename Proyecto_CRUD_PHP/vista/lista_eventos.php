@@ -1,4 +1,12 @@
 <?php
+session_start(); // Iniciar sesión
+
+// Verifico si el usuario está logueado
+if (!isset($_SESSION['id_usuario'])) {
+    session_destroy(); // Cierro la sesión por seguridad
+    header("Location: ../index.php");  // Redirijo al login si no está logueado
+    exit();
+}
 require_once '../controlador/EventosController.php';
 $controller = new EventosController();
 $eventos = $controller->listarEventos();
