@@ -34,7 +34,7 @@ $usuarios = $controller->listarUsuarios();
                         <td><?= $usuario['rol'] ?></td>
 
                         <td>
-                            <a href="editar_socios.php?id=<?= $usuario['id_usuario'] ?>" class="btn btn-warning">Editar</a>
+                            <a href="Usuarioseditar.php?id=<?= $usuario['id_usuario'] ?>" class="btn btn-warning">Editar</a>
 
                             <a href="eliminar_socio.php?id=<?= $usuario['id_usuario'] ?>" class="btn btn-danger">Eliminar</a>
                         </td>

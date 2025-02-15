@@ -29,7 +29,7 @@ session_start(); // Iniciar sesión para acceder a $_SESSION
             echo '</br>';
             echo '<a href="vista/lista_eventos.php" class="btn btn-primary">CRUD de Eventos</a>';
             echo '</br>';
-            echo '<a href="vista/UsuariosLista.php" class="btn btn-primary">CRUD de Usuarios</a>';
+            echo '<a href="vista/UsuarioLista.php" class="btn btn-primary">CRUD de Usuarios</a>';
             echo '</br>';
             echo '<a href="vista/cerrar_sesion.php" class="btn btn-primary">Cerrar Sesion</a>';
         }

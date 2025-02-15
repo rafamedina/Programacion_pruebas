@@ -51,9 +51,10 @@ class Usuario
         $contraseñaHashed = password_hash($contraseña, PASSWORD_DEFAULT);
 
         // Si no hay usuarios, el primero será admin
-        if ($rol == null){
-            $rol = ($this->contarUsuarios() == 0) ? 'admin' : 'user';}
-    
+        if ($rol == null) {
+            $rol = ($this->contarUsuarios() == 0) ? 'admin' : 'user';
+        }
+
 
         // Insertar el usuario con el rol determinado
         $query = "INSERT INTO Usuarios (nombre, correo, password, rol) VALUES (?, ?, ?, ?)";
@@ -141,5 +142,18 @@ class Usuario
         return $socios;
     }
 
-   
+    public function actualizarUsuario($idusuario, $nombre, $email, $rol)
+    {
+        $query = "UPDATE Usuarios SET nombre = ?, correo = ?, rol = ? WHERE id_usuario = ?";
+        $stmt = $this->conexion->conexion->prepare($query);
+        $stmt->bind_param("sssi", $nombre, $email, $rol, $idusuario);
+
+        if ($stmt->execute()) {
+            echo "Usuario actualizado con éxito.";
+        } else {
+            echo "Error al actualizar Usuario: " . $stmt->error;
+        }
+
+        $stmt->close();
+    }
 }

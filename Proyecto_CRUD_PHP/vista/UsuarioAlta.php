@@ -70,6 +70,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
             <button type="submit" class="btn btn-primary">Agregar Usuario</button>
         </form>
+        <a href="UsuarioLista.php" class="btn btn-primary">volver</a>
     </div>
 </body>
 
