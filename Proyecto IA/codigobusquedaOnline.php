@@ -18,7 +18,7 @@ function makeRequest($url, $prompt)
     curl_setopt($ch, CURLOPT_POSTFIELDS, $json_data);
 
     // 🔹 Inserta tu API Key real aquí
-    $api_key = "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";
+    $api_key = "API AQUI ";
 
     curl_setopt($ch, CURLOPT_HTTPHEADER, [
         'Authorization: Bearer ' . $api_key, // ✅ Correcto
