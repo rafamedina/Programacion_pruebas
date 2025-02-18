@@ -1,4 +1,4 @@
--- Active: 1739545017843@@127.0.0.1@3306@club_deportivo
+
 DROP DATABASE IF EXISTS club_deportivo;
 CREATE DATABASE if not EXISTS club_deportivo;
 USE club_deportivo;
