@@ -45,7 +45,7 @@ $prompt = trim(fgets(STDIN));
 
 if ($prompt) {
     // Realizar la solicitud HTTP con el prompt proporcionado
-    $respuesta = makeRequest("http://localhost:1234/v1/chat/completions", $prompt);
+    $respuesta = makeRequest("https://openrouter.ai/api/v1", $prompt);
 
     if ($respuesta !== null) {
         // Decodificar la respuesta JSON
