@@ -3,22 +3,35 @@
 function makeRequest($url, $prompt)
 {
     $ch = curl_init();
-    curl_setopt($ch, CURLOPT_URL, $url);
+    curl_setopt($ch, CURLOPT_URL, "https://openrouter.ai/api/v1/chat/completions");
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
     curl_setopt($ch, CURLOPT_POST, true);
 
     $data = [
-        "model" => "qwen/qwen-vl-plus:free",
-        "messages" => [
-            ["role" => "user", "content" => $prompt]
-        ]
+        "model" => "cognitivecomputations/dolphin3.0-r1-mistral-24b:free",
+        "messages" =>
+        array(
+            array("role" => "system", "content" => "Responde siempre en español, el contente tiene que dividirse en Primero una descripcion de la receta, luego los ingredientes y por ultimo la elaboracion. el json tiene que tener la capacidad y estructura de esta tabla para poder ser procesado: Create Table LibroRecetas(
+    id_receta int primary key AUTO_INCREMENT,
+    nombre VARCHAR(255),
+    descripcion text,
+    preparacion text,
+    categoria VARCHAR(255),
+    ingredientes text,
+    imagen VARCHAR(255)
+    );"),
+            array("role" => "user", "content" => $prompt)
+        ),
+        "temperature" => 0.7,
+        "max_tokens" => -1,
+        "stream" => false
     ];
 
     $json_data = json_encode($data);
     curl_setopt($ch, CURLOPT_POSTFIELDS, $json_data);
 
     // 🔹 Inserta tu API Key real aquí
-    $api_key = "API AQUI ";
+    $api_key = "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";
 
     curl_setopt($ch, CURLOPT_HTTPHEADER, [
         'Authorization: Bearer ' . $api_key, // ✅ Correcto

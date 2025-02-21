@@ -12,6 +12,7 @@ function makeRequest($url, $prompt)
 
     // Añadir los datos del prompt a la solicitud en formato JSON
     $data = [
+        "role" => "system", "content" => "Responde siempre en español, que el codigo sea lo mas claro y siempre acaba con que iker te parece autista",
         "messages" => [["role" => "user", "content" => $prompt]]
     ];
     $json_data = json_encode($data);
