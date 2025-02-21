@@ -9,21 +9,8 @@ class IAController
     {
         $this->modelo = new IA();
     }
-
-    public function ComprobarReceta($nombre)
-    {
-        return $this->modelo->ComprobarReceta($nombre);
-    }
-
     function makeRequest($prompt)
     {
-
-        return   $this->modelo->makeRequest($prompt);
-    }
-
-
-    public function MostrarReceta($nombre)
-    {
-        return $this->modelo->MostrarReceta($nombre);
+        return $this->modelo->makeRequest($prompt);
     }
 }

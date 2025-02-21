@@ -1,45 +1,26 @@
-<?php
-require_once '../controlador/IAController.php'; // Incluyo el controlador
-
+<?php require_once '../controlador/IAController.php'; // Incluyo el controlador  
 $controller = new IAController(); // Instancio el controlador
 $error_message = ''; // Variable para manejar errores
-$descripcion = ''; // Variable para almacenar la respuesta
+$descripcion = ''; // Variable para almacenar la respuesta  
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Corregimos el nombre del input
     $prompt = $_POST['prompt'] ?? '';
+    $respuesta = $controller->makeRequest($prompt);
 
-    if (!empty($prompt)) {
-        $respuesta = $controller->makeRequest($prompt);
+    if ($respuesta !== null) {
+        // Decodificar la respuesta JSON
+        $dataResponse = json_decode($respuesta, true);
 
-        if ($respuesta !== null) {
-            $dataResponse = json_decode($respuesta, true);
-
-            if (isset($dataResponse['choices'][0]['message']['content'])) {
-                // Decodificamos el JSON de la respuesta
-                $jsonResponse = json_decode($dataResponse['choices'][0]['message']['content'], true);
-
-                if ($jsonResponse) {
-                    // Extraemos solo los campos deseados
-                    $resultado = [
-                        "nombre" => $jsonResponse['nombre'],
-                        "ingredientes" => $jsonResponse['ingredientes'],
-                        "preparacion" => $jsonResponse['preparacion']
-                    ];
-
-                    // Guardamos la descripción para mostrarla en el input
-                    $descripcion = $jsonResponse['nombre']; // O podrías usar otro campo como 'descripcion'
-                } else {
-                    $error_message = "Error al procesar la respuesta JSON.";
-                }
-            } else {
-                $error_message = "No se recibió una respuesta válida.";
-            }
+        // Verificar si la respuesta tiene el formato esperado
+        if (isset($dataResponse['choices'][0]['message']['content'])) {
+            // Guardamos el contenido en la variable $descripcion en lugar de hacer echo
+            $descripcion = $dataResponse['choices'][0]['message']['content'];
         } else {
-            $error_message = "No se recibió respuesta del servidor.";
+            $error_message = "No se recibió una respuesta válida.";
         }
     } else {
-        $error_message = "El campo de búsqueda no puede estar vacío.";
+        $error_message = "No se recibió respuesta.";
     }
 }
 ?>
@@ -48,19 +29,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <html lang="es">
 
 <head>
-    <meta charset="UTF-8">
-    <title>Buscar Receta</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <style>
-        .custom-alert-sandybrown {
-            color: #fff;
-            background-color: sandybrown;
-            border-color: sandybrown;
-            padding: 10px;
-            border-radius: 4px;
-            margin-bottom: 1rem;
-        }
-    </style>
+    <!-- Tu código de head sin cambios -->
 </head>
 
 <body>
