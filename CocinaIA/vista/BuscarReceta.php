@@ -69,7 +69,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 <!DOCTYPE html>
 <html lang="es">
-
+dada
 <head>
     <meta charset="UTF-8">
     <title>Buscar Receta</title>
