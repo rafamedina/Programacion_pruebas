@@ -9,8 +9,22 @@ class IAController
     {
         $this->modelo = new IA();
     }
-    function makeRequest($prompt)
+
+
+    public function PedirIngredientes($prompt)
     {
-        return $this->modelo->makeRequest($prompt);
+        return $this->modelo->PedirIngredientes($prompt);
+    }
+    public function PedirDesarrollo($prompt)
+    {
+        return $this->modelo->PedirResumen($prompt);
+    }
+    public function PedirResumen($prompt)
+    {
+        return $this->modelo->PedirResumen($prompt);
+    }
+    public function PedirImagen($prompt)
+    {
+        return $this->modelo->PedirImagen($prompt);
     }
 }

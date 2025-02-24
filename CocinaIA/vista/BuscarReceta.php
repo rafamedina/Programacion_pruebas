@@ -1,75 +1,91 @@
-<?php require_once '../controlador/IAController.php';
+<?php
+require_once '../controlador/IAController.php';
+require_once '../controlador/RecetasController.php';
 
 $controller = new IAController();
-$error_message = '';
+$controllerreceta = new RecetasController;
 
 // Inicializar variables para los datos de la receta
-$nombre = '';
-$descripcion = '';
-$ingredientes = [];
-$preparacion = '';
-$categoria = '';
-$imagen = '';
+$error_message = '';
+$success_message = '';
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+// Procesar la búsqueda de recetas
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['prompt'])) {
     $prompt = $_POST['prompt'] ?? '';
 
     if (!empty($prompt)) {
-        $respuesta = $controller->makeRequest($prompt);
+        $nombre = $prompt;
+        // Primer paso: obtener ingredientes
+        $Resingredientes = $controller->PedirIngredientes($prompt);
+        $Resingredientes = json_decode($Resingredientes, true); // Decodificar JSON a array
 
-        if ($respuesta !== null) {
-            // Decodificar la respuesta JSON
-            $dataResponse = json_decode($respuesta, true);
+        if (is_array($Resingredientes) && isset($Resingredientes['choices'][0]['message']['content'])) {
+            $ingredientes = $Resingredientes['choices'][0]['message']['content'];
 
-            // Verificar si la respuesta tiene el formato esperado
-            if (isset($dataResponse['choices'][0]['message']['content'])) {
-                $contenido = $dataResponse['choices'][0]['message']['content'];
+            // Segundo paso: obtener preparación (cambiado de orden)
+            $Respreparacion = $controller->PedirDesarrollo($prompt);
+            $Respreparacion = json_decode($Respreparacion, true);
 
-                // Intentar extraer información del texto libre
-                // Extraer nombre (asumimos que está en el prompt)
-                $nombre = ucwords($prompt);
-                if (strpos($nombre, "Receta") === 0) {
-                    $nombre = substr($nombre, 7); // Quitar "Receta "
-                }
+            if (is_array($Respreparacion) && isset($Respreparacion['choices'][0]['message']['content'])) {
+                $preparacion = $Respreparacion['choices'][0]['message']['content'];
 
-                // Extraer descripción (primer párrafo normalmente)
-                $parrafos = explode("\n\n", $contenido);
-                if (!empty($parrafos[0])) {
-                    $descripcion = $parrafos[0];
-                }
+                // Tercer paso: obtener resumen (cambiado de orden)
+                $Resdescripcion = $controller->PedirResumen($prompt);
+                $Resdescripcion = json_decode($Resdescripcion, true);
 
-                // Extraer ingredientes
-                if (preg_match('/###\s*Ingredientes:(.+?)###/s', $contenido, $matches)) {
-                    $ingredientesTexto = $matches[1];
-                    $lineas = explode("\n", $ingredientesTexto);
-                    foreach ($lineas as $linea) {
-                        $linea = trim($linea);
-                        if (strpos($linea, '-') === 0) {
-                            $ingredientes[] = trim(substr($linea, 1));
-                        }
+                if (is_array($Resdescripcion) && isset($Resdescripcion['choices'][0]['message']['content'])) {
+                    $descripcion = $Resdescripcion['choices'][0]['message']['content'];
+
+                    // Cuarto paso: obtener imagen (mantiene su posición)
+                    $Resimagen = $controller->PedirImagen($prompt);
+                    $Resimagen = json_decode($Resimagen, true);
+
+                    if (is_array($Resimagen) && isset($Resimagen['choices'][0]['message']['content'])) {
+                        $imagen = $Resimagen['choices'][0]['message']['content'];
+                    } else {
+                        $error_message = 'No se pudo obtener la imagen.';
                     }
+                } else {
+                    $error_message = 'No se pudo obtener la descripción.';
                 }
-
-                // Extraer preparación
-                if (preg_match('/###\s*Instrucciones:(.+?)(?:###|$)/s', $contenido, $matches)) {
-                    $preparacion = trim($matches[1]);
-                }
-
-                // Asignar categoría por defecto
-                $categoria = "Plato principal";
             } else {
-                $error_message = "No se recibió una respuesta con el formato esperado.";
+                $error_message = 'No se pudo obtener la preparación.';
             }
         } else {
-            $error_message = "No se recibió respuesta del servicio.";
+            $error_message = 'No se pudieron obtener los ingredientes.';
         }
+    } else {
+        $error_message = 'No se encontró un prompt.';
+    }
+}
+
+// Procesar la acción de guardar
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] == 'guardar') {
+    // Obtener los datos del formulario de guardar
+    $nombre = $_POST['nombre'] ?? '';
+    $descripcion = $_POST['descripcion'] ?? '';
+    $ingredientes = $_POST['ingredientes'] ?? '';
+    $pasos = $_POST['preparacion'] ?? '';
+
+    // Verificar que tenemos todos los datos necesarios
+    if (!empty($nombre) && !empty($descripcion) && !empty($ingredientes)) {
+        // Llamar al método para guardar la receta
+        if ($controllerreceta->GuardarReceta($nombre, $descripcion, $preparacion, $ingredientes)) {
+            $success_message = "¡Receta guardada con éxito!";
+            // Mantener los datos para seguir mostrando la receta después de guardar
+            $prompt = $nombre;
+        } else {
+            $error_message = "Error al guardar la receta";
+        }
+    } else {
+        $error_message = "Faltan datos necesarios para guardar la receta";
     }
 }
 ?>
 
 <!DOCTYPE html>
 <html lang="es">
-dada
+
 <head>
     <meta charset="UTF-8">
     <title>Buscar Receta</title>
@@ -79,6 +95,15 @@ dada
             color: #fff;
             background-color: sandybrown;
             border-color: sandybrown;
+            padding: 10px;
+            border-radius: 4px;
+            margin-bottom: 1rem;
+        }
+
+        .custom-alert-success {
+            color: #fff;
+            background-color: #28a745;
+            border-color: #28a745;
             padding: 10px;
             border-radius: 4px;
             margin-bottom: 1rem;
@@ -121,6 +146,13 @@ dada
         .steps {
             white-space: pre-line;
         }
+
+        .recipe-image {
+            max-width: 100%;
+            height: auto;
+            margin: 15px 0;
+            border-radius: 8px;
+        }
     </style>
 </head>
 
@@ -131,6 +163,12 @@ dada
         <?php if (!empty($error_message)): ?>
             <div class="alert custom-alert-sandybrown">
                 <?= htmlspecialchars($error_message) ?>
+            </div>
+        <?php endif; ?>
+
+        <?php if (!empty($success_message)): ?>
+            <div class="alert custom-alert-success">
+                <?= htmlspecialchars($success_message) ?>
             </div>
         <?php endif; ?>
 
@@ -146,41 +184,47 @@ dada
                     <button type="submit" class="btn btn-primary w-100">Buscar</button>
                 </form>
 
-                <?php if (!empty($nombre) || !empty($descripcion)): ?>
+                <?php if (isset($nombre) && !empty($nombre)): ?>
                     <div class="recipe-card">
                         <div class="recipe-header">
                             <h2 class="text-center mb-0"><?= htmlspecialchars($nombre) ?></h2>
-                            <?php if (!empty($categoria)): ?>
-                                <p class="text-center text-muted mb-0">Categoría: <?= htmlspecialchars($categoria) ?></p>
-                            <?php endif; ?>
                         </div>
-
+                        <div class="text-center mt-3 mb-3">
+                            <!-- Formulario para guardar con campos ocultos en lugar de un enlace -->
+                            <form method="POST" action="">
+                                <input type="hidden" name="action" value="guardar">
+                                <input type="hidden" name="nombre" value="<?= htmlspecialchars($nombre) ?>">
+                                <input type="hidden" name="descripcion" value="<?= htmlspecialchars($descripcion ?? '') ?>">
+                                <input type="hidden" name="ingredientes" value="<?= htmlspecialchars($ingredientes ?? '') ?>">
+                                <input type="hidden" name="preparacion" value="<?= htmlspecialchars($imagen ?? '') ?>">
+                                <button type="submit" class="btn btn-success">Guardar Receta</button>
+                            </form>
+                        </div>
                         <div class="recipe-body">
-                            <?php if (!empty($descripcion)): ?>
+                            <?php if (isset($descripcion) && !empty($descripcion)): ?>
                                 <div class="recipe-section">
                                     <h4>Descripción</h4>
                                     <p><?= nl2br(htmlspecialchars($descripcion)) ?></p>
                                 </div>
                             <?php endif; ?>
 
-                            <?php if (!empty($ingredientes)): ?>
+                            <?php if (isset($ingredientes) && !empty($ingredientes)): ?>
                                 <div class="recipe-section">
                                     <h4>Ingredientes</h4>
-                                    <ul class="ingredient-list">
-                                        <?php foreach ($ingredientes as $ingrediente): ?>
-                                            <li><?= htmlspecialchars($ingrediente) ?></li>
-                                        <?php endforeach; ?>
-                                    </ul>
+                                    <div class="ingredient-list">
+                                        <?= nl2br(htmlspecialchars($ingredientes)) ?>
+                                    </div>
                                 </div>
                             <?php endif; ?>
 
-                            <?php if (!empty($preparacion)): ?>
+                            <?php if (isset($imagen) && !empty($imagen)): ?>
                                 <div class="recipe-section">
                                     <h4>Preparación</h4>
-                                    <div class="steps"><?= nl2br(htmlspecialchars($preparacion)) ?></div>
+                                    <div class="steps"><?= nl2br(htmlspecialchars($imagen)) ?></div>
                                 </div>
                             <?php endif; ?>
                         </div>
+
                     </div>
                 <?php endif; ?>
             </div>

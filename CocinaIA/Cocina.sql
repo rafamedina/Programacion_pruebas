@@ -9,11 +9,12 @@ Create Table LibroRecetas(
     nombre VARCHAR(255),
     descripcion text,
     preparacion text,
-    categoria VARCHAR(255),
-    ingredientes text,
-    imagen VARCHAR(255)
+    ingredientes text
     );
 
 
-
+Insert into librorecetas (nombre, descripcion, preparacion, ingredientes) VALUES (?,?,?,?)
 desc librorecetas;
+
+
+Select * from librorecetas;
