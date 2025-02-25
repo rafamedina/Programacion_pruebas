@@ -1,12 +1,64 @@
 <?php
-require_once '../controlador/RecetasController.php';
-$controller = new RecetasController();
+require_once '../config/class_conexion.php';
+
 class IA
 {
-    private $api_key = "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";
+    private $api_key = "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";
     private $api_url = "https://openrouter.ai/api/v1/chat/completions";
     private $contexto;
+    private $conexion;
 
+    public function __construct()
+    {
+        $this->conexion = new Conexion();
+    }
+
+    public function GuardarReceta($nombre, $descripcion, $preparacion, $ingredientes)
+    {
+        $existe = $this->obtenerRecetaPorNombre($nombre);
+        if (!$existe) {
+            $query = "INSERT INTO librorecetas (nombre, descripcion, preparacion, ingredientes) VALUES (?,?,?,?)";
+            $stmt = $this->conexion->conexion->prepare($query);
+            $stmt->bind_param("ssss", $nombre, $descripcion, $preparacion, $ingredientes);
+
+            if ($stmt->execute()) {
+                return true;
+                $stmt->close();
+            } else {
+                error_log("Error al agregar Receta: " . $stmt->error);
+                return false;
+                $stmt->close();
+            }
+        } else {
+
+            $query = "UPDATE librorecetas SET descripcion = ?, preparacion = ?, ingredientes = ? WHERE nombre = ?";
+            $stmt = $this->conexion->conexion->prepare($query);
+            $stmt->bind_param("ssss", $descripcion, $preparacion, $ingredientes, $nombre);
+
+            if ($stmt->execute()) {
+                return true;
+            } else {
+                return false;
+            }
+
+            $stmt->close();
+        }
+    }
+
+
+    public function obtenerRecetaPorNombre($nombre)
+    {
+        $query = "SELECT * FROM librorecetas WHERE nombre = ?";
+        $stmt = $this->conexion->conexion->prepare($query);
+        $stmt->bind_param("s", $nombre);
+        $stmt->execute();
+        $result = $stmt->get_result();
+
+        // Retorna todos los resultados como un array asociativo.
+        $planes = $result->fetch_all(MYSQLI_ASSOC);
+        $stmt->close();
+        return $planes;
+    }
 
     private function realizarSolicitud($mensaje)
     {
@@ -58,7 +110,13 @@ class IA
         return $this->realizarSolicitud($mensaje);
     }
 
-    public function PedirDesarrollo($prompt)
+    public function obtenerNombre($prompt)
+    {
+        $mensaje = "Genera un nombre adecuado y bien estructurado en español para la siguiente receta: '$prompt'. El nombre debe ser claro, atractivo y representativo del plato. No incluyas descripciones, ingredientes ni pasos de preparación, SOLO proporciona el nombre del plato.";
+        return $this->realizarSolicitud($mensaje);
+    }
+
+    public function PedirDesarrollo()
     {
         $mensaje = "Genera exclusivamente los pasos de preparación de la receta basándote en los ingredientes listados $this->contexto. 
 

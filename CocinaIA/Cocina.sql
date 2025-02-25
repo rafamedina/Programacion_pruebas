@@ -6,7 +6,7 @@ Use LibrodeCocina;
 
 Create Table LibroRecetas(
     id_receta int primary key AUTO_INCREMENT,
-    nombre VARCHAR(255),
+    nombre VARCHAR(255) UNIQUE,
     descripcion text,
     preparacion text,
     ingredientes text

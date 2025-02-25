@@ -1,38 +1,50 @@
 <?php
 require_once '../controlador/IAController.php';
-require_once '../controlador/RecetasController.php';
 
 $controller = new IAController();
-$controllerreceta = new RecetasController();
 
 $error_message = '';
 $success_message = '';
+
+$nombre = $descripcion = $ingredientes = $preparacion = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['prompt'])) {
     $prompt = $_POST['prompt'] ?? '';
 
     if (!empty($prompt)) {
         $nombre = $prompt;
-        $ingredientes = $controller->PedirIngredientes($prompt);
-        $preparacion = $controller->PedirDesarrollo($prompt);
-        $descripcion = $controller->PedirResumen($prompt);
+        $existe = $controller->obtenerRecetaPorNombre($nombre);
 
-        if (!$ingredientes) $error_message = 'No se pudieron obtener los ingredientes.';
-        if (!$preparacion) $error_message = 'No se pudo obtener la preparación.';
-        if (!$descripcion) $error_message = 'No se pudo obtener la descripción.';
+        if (!empty($existe) && is_array($existe) && isset($existe[0])) {
+            // Si la receta ya está en la base de datos, cargamos sus valores
+            $descripcion = $existe[0]['descripcion'] ?? 'Descripción no disponible';
+            $ingredientes = $existe[0]['ingredientes'] ?? 'Ingredientes no disponibles';
+            $preparacion = $existe[0]['preparacion'] ?? 'Preparación no disponible';
+            $success_message = 'La receta se ha encontrado en la base de datos.';
+        } else {
+            // Si no existe, generamos la receta con la API
+            $ingredientes = $controller->PedirIngredientes($prompt);
+            $preparacion = $controller->PedirDesarrollo($prompt);
+            $descripcion = $controller->PedirResumen($prompt);
+
+            if (!$ingredientes) $error_message = 'No se pudieron obtener los ingredientes.';
+            if (!$preparacion) $error_message = 'No se pudo obtener la preparación.';
+            if (!$descripcion) $error_message = 'No se pudo obtener la descripción.';
+        }
     } else {
         $error_message = 'No se encontró un prompt.';
     }
 }
 
+// Guardar la receta en la base de datos
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] == 'guardar') {
     $nombre = $_POST['nombre'] ?? '';
     $descripcion = $_POST['descripcion'] ?? '';
     $ingredientes = $_POST['ingredientes'] ?? '';
     $preparacion = $_POST['preparacion'] ?? '';
 
-    if (!empty($nombre) && !empty($descripcion) && !empty($ingredientes)) {
-        if ($controllerreceta->GuardarReceta($nombre, $descripcion, $preparacion, $ingredientes)) {
+    if (!empty($nombre) && !empty($descripcion) && !empty($ingredientes) && !empty($preparacion)) {
+        if ($controller->GuardarReceta($nombre, $descripcion, $preparacion, $ingredientes)) {
             $success_message = "¡Receta guardada con éxito!";
             $prompt = $nombre;
         } else {
@@ -42,6 +54,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
         $error_message = "Faltan datos necesarios para guardar la receta";
     }
 }
+
 ?>
 
 <!DOCTYPE html>
@@ -88,7 +101,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                     <button type="submit" class="btn btn-primary w-100">Buscar</button>
                 </form>
 
-                <?php if (isset($nombre) && !empty($nombre)): ?>
+                <?php if (!empty($nombre)): ?>
                     <form method="POST" action="" class="mt-4 p-4 bg-white rounded shadow-sm">
                         <input type="hidden" name="action" value="guardar">
                         <div class="form-group mb-3">
@@ -97,15 +110,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                         </div>
                         <div class="form-group mb-3">
                             <label for="descripcion" class="form-label">Descripción</label>
-                            <textarea class="form-control auto-expand" id="descripcion" name="descripcion" rows="3" required><?= htmlspecialchars($descripcion ?? '') ?></textarea>
+                            <textarea class="form-control auto-expand" id="descripcion" name="descripcion" rows="3" required><?= htmlspecialchars($descripcion) ?></textarea>
                         </div>
                         <div class="form-group mb-3">
                             <label for="ingredientes" class="form-label">Ingredientes</label>
-                            <textarea class="form-control auto-expand" id="ingredientes" name="ingredientes" rows="4" required><?= htmlspecialchars($ingredientes ?? '') ?></textarea>
+                            <textarea class="form-control auto-expand" id="ingredientes" name="ingredientes" rows="4" required><?= htmlspecialchars($ingredientes) ?></textarea>
                         </div>
                         <div class="form-group mb-3">
                             <label for="preparacion" class="form-label">Preparación</label>
-                            <textarea class="form-control auto-expand" id="preparacion" name="preparacion" rows="5" required><?= htmlspecialchars($preparacion ?? '') ?></textarea>
+                            <textarea class="form-control auto-expand" id="preparacion" name="preparacion" rows="5" required><?= htmlspecialchars($preparacion) ?></textarea>
                         </div>
                         <button type="submit" class="btn btn-success w-100">Guardar Receta</button>
                     </form>

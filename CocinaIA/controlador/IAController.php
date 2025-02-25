@@ -15,12 +15,24 @@ class IAController
     {
         return $this->modelo->PedirIngredientes($prompt);
     }
-    public function PedirDesarrollo($prompt)
+    public function PedirDesarrollo()
     {
-        return $this->modelo->PedirDesarrollo($prompt);
+        return $this->modelo->PedirDesarrollo();
     }
     public function PedirResumen($prompt)
     {
         return $this->modelo->PedirResumen($prompt);
+    }
+    public function GuardarReceta($nombre, $descripcion, $preparacion, $ingredientes)
+    {
+        return $this->modelo->GuardarReceta($nombre, $descripcion, $preparacion, $ingredientes);
+    }
+    public function obtenerRecetaPorNombre($nombre)
+    {
+        return $this->modelo->obtenerRecetaPorNombre($nombre);
+    }
+    public function obtenerNombre($prompt)
+    {
+        return $this->modelo->obtenerNombre($prompt);
     }
 }
