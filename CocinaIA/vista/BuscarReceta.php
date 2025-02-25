@@ -3,76 +3,37 @@ require_once '../controlador/IAController.php';
 require_once '../controlador/RecetasController.php';
 
 $controller = new IAController();
-$controllerreceta = new RecetasController;
+$controllerreceta = new RecetasController();
 
-// Inicializar variables para los datos de la receta
 $error_message = '';
 $success_message = '';
 
-// Procesar la búsqueda de recetas
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['prompt'])) {
     $prompt = $_POST['prompt'] ?? '';
 
     if (!empty($prompt)) {
         $nombre = $prompt;
-        // Primer paso: obtener ingredientes
-        $Resingredientes = $controller->PedirIngredientes($prompt);
-        $Resingredientes = json_decode($Resingredientes, true); // Decodificar JSON a array
+        $ingredientes = $controller->PedirIngredientes($prompt);
+        $preparacion = $controller->PedirDesarrollo($prompt);
+        $descripcion = $controller->PedirResumen($prompt);
 
-        if (is_array($Resingredientes) && isset($Resingredientes['choices'][0]['message']['content'])) {
-            $ingredientes = $Resingredientes['choices'][0]['message']['content'];
-
-            // Segundo paso: obtener preparación (cambiado de orden)
-            $Respreparacion = $controller->PedirDesarrollo($prompt);
-            $Respreparacion = json_decode($Respreparacion, true);
-
-            if (is_array($Respreparacion) && isset($Respreparacion['choices'][0]['message']['content'])) {
-                $preparacion = $Respreparacion['choices'][0]['message']['content'];
-
-                // Tercer paso: obtener resumen (cambiado de orden)
-                $Resdescripcion = $controller->PedirResumen($prompt);
-                $Resdescripcion = json_decode($Resdescripcion, true);
-
-                if (is_array($Resdescripcion) && isset($Resdescripcion['choices'][0]['message']['content'])) {
-                    $descripcion = $Resdescripcion['choices'][0]['message']['content'];
-
-                    // Cuarto paso: obtener imagen (mantiene su posición)
-                    $Resimagen = $controller->PedirImagen($prompt);
-                    $Resimagen = json_decode($Resimagen, true);
-
-                    if (is_array($Resimagen) && isset($Resimagen['choices'][0]['message']['content'])) {
-                        $imagen = $Resimagen['choices'][0]['message']['content'];
-                    } else {
-                        $error_message = 'No se pudo obtener la imagen.';
-                    }
-                } else {
-                    $error_message = 'No se pudo obtener la descripción.';
-                }
-            } else {
-                $error_message = 'No se pudo obtener la preparación.';
-            }
-        } else {
-            $error_message = 'No se pudieron obtener los ingredientes.';
-        }
+        if (!$ingredientes) $error_message = 'No se pudieron obtener los ingredientes.';
+        if (!$preparacion) $error_message = 'No se pudo obtener la preparación.';
+        if (!$descripcion) $error_message = 'No se pudo obtener la descripción.';
     } else {
         $error_message = 'No se encontró un prompt.';
     }
 }
 
-// Procesar la acción de guardar
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] == 'guardar') {
-    // Obtener los datos del formulario de guardar
     $nombre = $_POST['nombre'] ?? '';
     $descripcion = $_POST['descripcion'] ?? '';
     $ingredientes = $_POST['ingredientes'] ?? '';
-    $pasos = $_POST['preparacion'] ?? '';
+    $preparacion = $_POST['preparacion'] ?? '';
 
-    // Verificar que tenemos todos los datos necesarios
     if (!empty($nombre) && !empty($descripcion) && !empty($ingredientes)) {
-        // Llamar al método para guardar la receta
         if ($controllerreceta->GuardarReceta($nombre, $descripcion, $preparacion, $ingredientes)) {
             $success_message = "¡Receta guardada con éxito!";
-            // Mantener los datos para seguir mostrando la receta después de guardar
             $prompt = $nombre;
         } else {
             $error_message = "Error al guardar la receta";
@@ -90,68 +51,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     <meta charset="UTF-8">
     <title>Buscar Receta</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
     <style>
-        .custom-alert-sandybrown {
-            color: #fff;
-            background-color: sandybrown;
-            border-color: sandybrown;
-            padding: 10px;
-            border-radius: 4px;
-            margin-bottom: 1rem;
-        }
-
-        .custom-alert-success {
-            color: #fff;
-            background-color: #28a745;
-            border-color: #28a745;
-            padding: 10px;
-            border-radius: 4px;
-            margin-bottom: 1rem;
-        }
-
-        .recipe-card {
-            border-radius: 8px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-            margin-top: 25px;
-            background-color: #fff;
-        }
-
-        .recipe-header {
-            background-color: #f8f9fa;
-            padding: 15px;
-            border-bottom: 1px solid #e9ecef;
-            border-radius: 8px 8px 0 0;
-        }
-
-        .recipe-body {
-            padding: 20px;
-        }
-
-        .recipe-section {
-            margin-bottom: 20px;
-        }
-
-        .recipe-section h4 {
-            color: #e67e22;
-            border-bottom: 2px solid #e67e22;
-            padding-bottom: 5px;
-            margin-bottom: 15px;
-        }
-
-        .ingredient-list {
-            list-style-type: disc;
-            padding-left: 20px;
-        }
-
-        .steps {
-            white-space: pre-line;
-        }
-
-        .recipe-image {
-            max-width: 100%;
-            height: auto;
-            margin: 15px 0;
-            border-radius: 8px;
+        textarea {
+            width: 100%;
+            min-height: 50px;
+            resize: none;
+            overflow: hidden;
         }
     </style>
 </head>
@@ -161,13 +67,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
         <h1 class="mt-4 text-center">Buscar Receta</h1>
 
         <?php if (!empty($error_message)): ?>
-            <div class="alert custom-alert-sandybrown">
+            <div class="alert alert-warning">
                 <?= htmlspecialchars($error_message) ?>
             </div>
         <?php endif; ?>
 
         <?php if (!empty($success_message)): ?>
-            <div class="alert custom-alert-success">
+            <div class="alert alert-success">
                 <?= htmlspecialchars($success_message) ?>
             </div>
         <?php endif; ?>
@@ -177,61 +83,45 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                 <form method="POST" action="" class="mt-4 p-4 bg-white rounded shadow-sm">
                     <div class="form-group mb-3">
                         <label for="prompt" class="form-label">¿Qué receta buscas?</label>
-                        <input type="text" class="form-control" id="prompt" name="prompt"
-                            placeholder="Ej: Receta de paella valenciana" required
-                            value="<?= htmlspecialchars($prompt ?? '') ?>">
+                        <input type="text" class="form-control" id="prompt" name="prompt" placeholder="Ej: Receta de paella valenciana" required value="<?= htmlspecialchars($prompt ?? '') ?>">
                     </div>
                     <button type="submit" class="btn btn-primary w-100">Buscar</button>
                 </form>
 
                 <?php if (isset($nombre) && !empty($nombre)): ?>
-                    <div class="recipe-card">
-                        <div class="recipe-header">
-                            <h2 class="text-center mb-0"><?= htmlspecialchars($nombre) ?></h2>
+                    <form method="POST" action="" class="mt-4 p-4 bg-white rounded shadow-sm">
+                        <input type="hidden" name="action" value="guardar">
+                        <div class="form-group mb-3">
+                            <label for="nombre" class="form-label">Nombre de la receta</label>
+                            <input type="text" class="form-control" id="nombre" name="nombre" value="<?= htmlspecialchars($nombre) ?>" required>
                         </div>
-                        <div class="text-center mt-3 mb-3">
-                            <!-- Formulario para guardar con campos ocultos en lugar de un enlace -->
-                            <form method="POST" action="">
-                                <input type="hidden" name="action" value="guardar">
-                                <input type="hidden" name="nombre" value="<?= htmlspecialchars($nombre) ?>">
-                                <input type="hidden" name="descripcion" value="<?= htmlspecialchars($descripcion ?? '') ?>">
-                                <input type="hidden" name="ingredientes" value="<?= htmlspecialchars($ingredientes ?? '') ?>">
-                                <input type="hidden" name="preparacion" value="<?= htmlspecialchars($imagen ?? '') ?>">
-                                <button type="submit" class="btn btn-success">Guardar Receta</button>
-                            </form>
+                        <div class="form-group mb-3">
+                            <label for="descripcion" class="form-label">Descripción</label>
+                            <textarea class="form-control auto-expand" id="descripcion" name="descripcion" rows="3" required><?= htmlspecialchars($descripcion ?? '') ?></textarea>
                         </div>
-                        <div class="recipe-body">
-                            <?php if (isset($descripcion) && !empty($descripcion)): ?>
-                                <div class="recipe-section">
-                                    <h4>Descripción</h4>
-                                    <p><?= nl2br(htmlspecialchars($descripcion)) ?></p>
-                                </div>
-                            <?php endif; ?>
-
-                            <?php if (isset($ingredientes) && !empty($ingredientes)): ?>
-                                <div class="recipe-section">
-                                    <h4>Ingredientes</h4>
-                                    <div class="ingredient-list">
-                                        <?= nl2br(htmlspecialchars($ingredientes)) ?>
-                                    </div>
-                                </div>
-                            <?php endif; ?>
-
-                            <?php if (isset($imagen) && !empty($imagen)): ?>
-                                <div class="recipe-section">
-                                    <h4>Preparación</h4>
-                                    <div class="steps"><?= nl2br(htmlspecialchars($imagen)) ?></div>
-                                </div>
-                            <?php endif; ?>
+                        <div class="form-group mb-3">
+                            <label for="ingredientes" class="form-label">Ingredientes</label>
+                            <textarea class="form-control auto-expand" id="ingredientes" name="ingredientes" rows="4" required><?= htmlspecialchars($ingredientes ?? '') ?></textarea>
                         </div>
-
-                    </div>
+                        <div class="form-group mb-3">
+                            <label for="preparacion" class="form-label">Preparación</label>
+                            <textarea class="form-control auto-expand" id="preparacion" name="preparacion" rows="5" required><?= htmlspecialchars($preparacion ?? '') ?></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-success w-100">Guardar Receta</button>
+                    </form>
                 <?php endif; ?>
             </div>
         </div>
     </div>
-
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.addEventListener('input', function(event) {
+            if (event.target.tagName.toLowerCase() === 'textarea') {
+                event.target.style.height = 'auto';
+                event.target.style.height = (event.target.scrollHeight) + 'px';
+            }
+        });
+    </script>
 </body>
 
 </html>

@@ -1,244 +1,99 @@
 <?php
-
+require_once '../controlador/RecetasController.php';
+$controller = new RecetasController();
 class IA
 {
+    private $api_key = "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";
+    private $api_url = "https://openrouter.ai/api/v1/chat/completions";
     private $contexto;
 
-    public function actualizarContexto($respuesta)
-    {
-        $this->contexto = $respuesta;
-    }
 
-    public function SetContexto($respuesta)
+    private function realizarSolicitud($mensaje)
     {
-        $this->contexto = $respuesta;
-    }
-    public function EliminarContexto()
-    {
-        $this->contexto = " ";
-    }
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, $this->api_url);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_POST, true);
 
+        $data = [
+            "model" => "cognitivecomputations/dolphin3.0-mistral-24b:free",
+            "system" => "Habla en español",
+            "messages" => [["role" => "user", "content" => $mensaje]],
+            "temperature" => 0.1,
+            "max_tokens" => -1,
+            "stream" => false
+        ];
+
+        curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
+        curl_setopt($ch, CURLOPT_HTTPHEADER, [
+            'Authorization: Bearer ' . $this->api_key,
+            'Content-Type: application/json'
+        ]);
+
+        $respuesta = curl_exec($ch);
+
+        if (curl_errno($ch)) {
+            curl_close($ch);
+            return "Error de CURL: " . curl_error($ch);
+        }
+
+        curl_close($ch);
+
+        $respuesta_json = json_decode($respuesta, true);
+
+        return $respuesta_json['choices'][0]['message']['content'] ?? "Error en la respuesta de la API";
+    }
 
     public function PedirIngredientes($prompt)
     {
-        // Configuración de la solicitud cURL
-        $ch = curl_init();
-
-        // Establecer la URL de destino
-        curl_setopt($ch, CURLOPT_URL, "http://localhost:1234/v1/chat/completions");
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_POST, true);
-
-        // El mensaje del sistema debe ir en la clave "system" y los mensajes en la clave "messages"
-        $data = [
-            "model" => "llama-3.2-3b-instruct",
-            "system" => "Habla en español",
-            "messages" => [
-                [
-                    "role" => "user",
-                    "content" => "Proporciona únicamente la lista de ingredientes de la receta: $prompt.
-Sigue este formato exacto:
-
-Ingrediente 1 (cantidad)
-Ingrediente 2 (cantidad)
-Ingrediente 3 (cantidad)
-(y así sucesivamente).
-La respuesta debe seguir exactamente este formato sin variaciones en cada consulta, sin importar cuántas veces se repita la pregunta.
-No agregues explicaciones, encabezados, notas, introducciones ni conclusiones.
-Solo devuelve la lista estrictamente en el formato especificado.
-No uses caracteres en negrita, emoticonos ni ninguna otra variación de formato.
-No olvides incluir los guiones al inicio de cada línea."
-                ]
-            ]
-        ];
-
-        $json_data = json_encode($data);
-        curl_setopt($ch, CURLOPT_POSTFIELDS, $json_data);
-
-        // Establecer el tipo de contenido a enviar (JSON)
-        curl_setopt($ch, CURLOPT_HTTPHEADER, [
-            'Content-Type: application/json',
-            'Content-Length: ' . strlen($json_data)
-        ]);
-
-        // Ejecutar la solicitud y almacenar el resultado
-        $respuesta = curl_exec($ch);
-
-        // Verificar si hubo un error en la solicitud
-        if (curl_errno($ch)) {
-            echo 'Error: ' . curl_error($ch);
-            curl_close($ch);
-            return null;
-        }
-
-        // Cerrar la sesión cURL
-        curl_close($ch);
-        $this->SetContexto($respuesta);
-        return $respuesta;
+        $mensaje = "Proporciona únicamente la lista de ingredientes de la receta: $prompt. Sigue este formato exacto:\n- Ingrediente 1 (cantidad)\n- Ingrediente 2 (cantidad)\n- Ingrediente 3 (cantidad)... No agregues introducciones, encabezados, notas ni explicaciones.";
+        $ingredientes = $this->realizarSolicitud($mensaje);
+        $this->SetContexto($ingredientes);
+        return $ingredientes;
     }
-
-
 
     public function PedirResumen($prompt)
     {
-        // Configuración de la solicitud cURL
-        $ch = curl_init();
-
-        // Establecer la URL de destino
-        curl_setopt($ch, CURLOPT_URL, "http://localhost:1234/v1/chat/completions");
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_POST, true);
-
-        // El mensaje del sistema debe ir en la clave "system" y los mensajes en la clave "messages"
-        $data = [
-            "model" => "llama-3.2-3b-instruct",
-            "system" => "habla en español",
-            "messages" => [
-                [
-                    "role" => "user",
-                    "content" => "Explica brevemente en español de qué trata la receta " . $prompt . ", el conexto que tienes sobre la receta es el siguient" . $this->contexto . ";. No des los pasos de preparación ni los ingredientes, solo una descripción general de qué tipo de plato es, sus características principales y en qué contexto suele consumirse. Si " . $prompt . " no es una receta de cocina, responde con: 'No puedo ayudarte con eso, ya que no parece ser una receta válida'."
-                ]
-            ]
-        ];
-
-        $json_data = json_encode($data);
-        curl_setopt($ch, CURLOPT_POSTFIELDS, $json_data);
-
-        // Establecer el tipo de contenido a enviar (JSON)
-        curl_setopt($ch, CURLOPT_HTTPHEADER, [
-            'Content-Type: application/json',
-            'Content-Length: ' . strlen($json_data)
-        ]);
-
-        // Ejecutar la solicitud y almacenar el resultado
-        $respuesta = curl_exec($ch);
-
-        // Verificar si hubo un error en la solicitud
-        if (curl_errno($ch)) {
-            echo 'Error: ' . curl_error($ch);
-            curl_close($ch);
-            return null;
-        }
-
-        // Cerrar la sesión cURL
-        curl_close($ch);
-        return $respuesta;
+        $mensaje = "Explica brevemente en español de qué trata la receta $prompt. El contexto que tienes es el siguiente: $this->contexto. No des los pasos de preparación ni los ingredientes, solo una descripción general del plato y su contexto de consumo.";
+        return $this->realizarSolicitud($mensaje);
     }
 
     public function PedirDesarrollo($prompt)
     {
-        // Configuración de la solicitud cURL
-        $ch = curl_init();
+        $mensaje = "Genera exclusivamente los pasos de preparación de la receta basándote en los ingredientes listados $this->contexto. 
 
-        // Establecer la URL de destino
-        curl_setopt($ch, CURLOPT_URL, "http://localhost:1234/v1/chat/completions");
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_POST, true);
-
-        // El mensaje del sistema debe ir en la clave "system" y los mensajes en la clave "messages"
-        $data = [
-            "model" => "llama-3.2-3b-instruct",
-            "system" => "Habla en español",
-            "messages" => [
-                [
-                    "role" => "user",
-                    "content" => "Con base en la información que tienes sobre " . $this->contexto . " y los ingredientes listados, proporciona **únicamente** los pasos exactos para su preparación en este formato estricto:
-
+**Formato obligatorio:**
 1. Paso 1...
 2. Paso 2...
 3. Paso 3...
-...
 
-No agregues introducciones, explicaciones, resúmenes ni conclusiones. No incluyas información adicional sobre el origen o características del platillo. Solo devuelve la lista de pasos en el formato indicado.  
-No uses negritas, emoticonos ni otro formato adicional.  
+⚠ **Reglas estrictas:**
+- No incluyas ninguna introducción, historia, descripción o información adicional sobre la receta.
+- No menciones los ingredientes, solo úsalos implícitamente en los pasos.
+- No agregues explicaciones sobre el plato o sugerencias de presentación.
+- No uses adjetivos ni comentarios sobre el sabor, textura o tradición del plato.
+- Si la entrada no corresponde a una receta válida, responde únicamente: 'No puedo ayudarte con eso, ya que no parece ser una receta válida.'
 
-Si " . $prompt . " no es una receta válida o no tienes información suficiente, responde con: ''No puedo ayudarte con eso, ya que no parece ser una receta válida.'
-"
-                ]
-            ]
-        ];
+**Ejemplo de salida esperada:**
+1. Pela y corta las patatas en rodajas finas.
+2. Fríe las patatas en aceite caliente hasta que estén doradas.
+3. Retira las patatas y fríe los huevos en el mismo aceite.
+4. Coloca las patatas en un plato, añade los huevos fritos encima y rómpelos ligeramente con un tenedor.
+";
 
-        $json_data = json_encode($data);
-        curl_setopt($ch, CURLOPT_POSTFIELDS, $json_data);
-
-        // Establecer el tipo de contenido a enviar (JSON)
-        curl_setopt($ch, CURLOPT_HTTPHEADER, [
-            'Content-Type: application/json',
-            'Content-Length: ' . strlen($json_data)
-        ]);
-
-        // Ejecutar la solicitud y almacenar el resultado
-        $respuesta = curl_exec($ch);
-
-        // Verificar si hubo un error en la solicitud
-        if (curl_errno($ch)) {
-            echo 'Error: ' . curl_error($ch);
-            curl_close($ch);
-            return null;
-        }
-
-        // Cerrar la sesión cURL
-        curl_close($ch);
-        $this->actualizarContexto($respuesta);
-        return $respuesta;
+        return $this->realizarSolicitud($mensaje);
+        $this->EliminarContexto();
     }
 
 
-    public function PedirImagen($prompt)
+
+    private function SetContexto($contexto)
     {
-        // Configuración de la solicitud cURL
-        $ch = curl_init();
+        $this->contexto = $contexto;
+    }
 
-        // Establecer la URL de destino
-        curl_setopt($ch, CURLOPT_URL, "http://localhost:1234/v1/chat/completions");
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_POST, true);
-
-        // El mensaje del sistema debe ir en la clave "system" y los mensajes en la clave "messages"
-        $data = [
-            "model" => "llama-3.2-3b-instruct",
-            "system" => "Habla en español",
-            "messages" => [
-                [
-                    "role" => "user",
-                    "content" => "Con base en la información que tienes sobre " . $this->contexto . " y los ingredientes listados, proporciona **únicamente** los pasos exactos para su preparación en este formato estricto:
-
-1. Paso 1...
-2. Paso 2...
-3. Paso 3...
-...
-
-No agregues introducciones, explicaciones, resúmenes ni conclusiones. No incluyas información adicional sobre el origen o características del platillo. Solo devuelve la lista de pasos en el formato indicado.  
-No uses negritas, emoticonos ni otro formato adicional.  
-
-Si " . $prompt . " no es una receta válida o no tienes información suficiente, responde con: ''No puedo ayudarte con eso, ya que no parece ser una receta válida.'"
-
-                ]
-            ]
-        ];
-
-        $json_data = json_encode($data);
-        curl_setopt($ch, CURLOPT_POSTFIELDS, $json_data);
-
-        // Establecer el tipo de contenido a enviar (JSON)
-        curl_setopt($ch, CURLOPT_HTTPHEADER, [
-            'Content-Type: application/json',
-            'Content-Length: ' . strlen($json_data)
-        ]);
-
-        // Ejecutar la solicitud y almacenar el resultado
-        $respuesta = curl_exec($ch);
-
-        // Verificar si hubo un error en la solicitud
-        if (curl_errno($ch)) {
-            echo 'Error: ' . curl_error($ch);
-            curl_close($ch);
-            return null;
-        }
-
-        // Cerrar la sesión cURL
-        curl_close($ch);
-        $this->EliminarContexto();
-        return $respuesta;
+    private function EliminarContexto()
+    {
+        $this->contexto = null;
     }
 }

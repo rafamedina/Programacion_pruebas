@@ -17,14 +17,10 @@ class IAController
     }
     public function PedirDesarrollo($prompt)
     {
-        return $this->modelo->PedirResumen($prompt);
+        return $this->modelo->PedirDesarrollo($prompt);
     }
     public function PedirResumen($prompt)
     {
         return $this->modelo->PedirResumen($prompt);
-    }
-    public function PedirImagen($prompt)
-    {
-        return $this->modelo->PedirImagen($prompt);
     }
 }

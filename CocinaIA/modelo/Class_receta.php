@@ -27,22 +27,12 @@ class Receta
         }
     }
 
-    public function obtenerEventos()
-    {
-        $query = "SELECT * FROM eventos";
-        $resultado = $this->conexion->conexion->query($query);
-        $eventos = [];
-        while ($fila = $resultado->fetch_assoc()) {
-            $eventos[] = $fila;
-        }
-        return $eventos;
-    }
 
-    public function obtenerEventoPorId($id_evento)
+    public function obtenerRecetaPorNombre($nombre)
     {
-        $query = "SELECT * FROM eventos WHERE id_evento = ?";
+        $query = "SELECT * FROM librorecetas WHERE nombre = ?";
         $stmt = $this->conexion->conexion->prepare($query);
-        $stmt->bind_param("i", $id_evento);
+        $stmt->bind_param("s", $nombre);
         $stmt->execute();
         $resultado = $stmt->get_result();
         return $resultado->fetch_assoc();

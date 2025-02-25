@@ -11,6 +11,10 @@ class RecetasController
     }
     public function GuardarReceta($nombre, $descripcion, $preparacion, $ingredientes)
     {
-        return $this->GuardarReceta($nombre, $descripcion, $preparacion, $ingredientes);
+        return $this->modelo->GuardarReceta($nombre, $descripcion, $preparacion, $ingredientes);
+    }
+    public function obtenerRecetaPorNombre($nombre)
+    {
+        return $this->modelo->obtenerRecetaPorNombre($nombre);
     }
 }
