@@ -3,7 +3,7 @@ require_once '../config/class_conexion.php';
 
 class IA
 {
-    private $api_key = "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";
+    private $api_key = "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";
     private $api_url = "https://openrouter.ai/api/v1/chat/completions";
     private $contexto;
     private $conexion;

@@ -128,12 +128,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     </div>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        document.addEventListener('input', function(event) {
-            if (event.target.tagName.toLowerCase() === 'textarea') {
-                event.target.style.height = 'auto';
-                event.target.style.height = (event.target.scrollHeight) + 'px';
+        document.addEventListener("DOMContentLoaded", function() {
+            document.querySelectorAll("textarea").forEach(textarea => {
+                autoExpand(textarea);
+            });
+        });
+
+        document.addEventListener("input", function(event) {
+            if (event.target.tagName.toLowerCase() === "textarea") {
+                autoExpand(event.target);
             }
         });
+
+        function autoExpand(textarea) {
+            textarea.style.height = "auto";
+            textarea.style.height = textarea.scrollHeight + "px";
+        }
     </script>
 </body>
 
