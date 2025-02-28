@@ -13,8 +13,6 @@ Create Table LibroRecetas(
     );
 
 
-Insert into librorecetas (nombre, descripcion, preparacion, ingredientes) VALUES (?,?,?,?)
-desc librorecetas;
 
 
 Select * from librorecetas;

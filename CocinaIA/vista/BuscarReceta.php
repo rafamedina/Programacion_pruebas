@@ -1,13 +1,18 @@
 <?php
+// Importo el controlador que maneja la lógica relacionada con la IA y la base de datos
 require_once '../controlador/IAController.php';
 
+// Creo una instancia del controlador para manejar las recetas
 $controller = new IAController();
 
+// Variables para mensajes de error y éxito que se mostrarán en la interfaz
 $error_message = '';
 $success_message = '';
 
+// Inicializo las variables donde se almacenarán los datos de la receta
 $nombre = $descripcion = $ingredientes = $preparacion = '';
 
+// Si el usuario ha enviado un formulario con un prompt, proceso la búsqueda de la receta
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['prompt'])) {
     $prompt = $_POST['prompt'] ?? '';
 
@@ -16,17 +21,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['prompt'])) {
         $existe = $controller->obtenerRecetaPorNombre($nombre);
 
         if (!empty($existe) && is_array($existe) && isset($existe[0])) {
-            // Si la receta ya está en la base de datos, cargamos sus valores
+            // Si la receta ya existe en la base de datos, recupero sus valores
             $descripcion = $existe[0]['descripcion'] ?? 'Descripción no disponible';
             $ingredientes = $existe[0]['ingredientes'] ?? 'Ingredientes no disponibles';
             $preparacion = $existe[0]['preparacion'] ?? 'Preparación no disponible';
             $success_message = 'La receta se ha encontrado en la base de datos.';
         } else {
-            // Si no existe, generamos la receta con la API
+            // Si la receta no está en la base de datos, la solicito a la IA
             $ingredientes = $controller->PedirIngredientes($prompt);
             $preparacion = $controller->PedirDesarrollo($prompt);
             $descripcion = $controller->PedirResumen($prompt);
 
+            // Verifico si hubo errores en la generación de los datos
             if (!$ingredientes) $error_message = 'No se pudieron obtener los ingredientes.';
             if (!$preparacion) $error_message = 'No se pudo obtener la preparación.';
             if (!$descripcion) $error_message = 'No se pudo obtener la descripción.';
@@ -36,17 +42,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['prompt'])) {
     }
 }
 
-// Guardar la receta en la base de datos
+// Si el usuario quiere guardar la receta en la base de datos
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] == 'guardar') {
+    // Recupero los datos ingresados en el formulario
     $nombre = $_POST['nombre'] ?? '';
     $descripcion = $_POST['descripcion'] ?? '';
     $ingredientes = $_POST['ingredientes'] ?? '';
     $preparacion = $_POST['preparacion'] ?? '';
 
+    // Verifico que los datos sean válidos antes de guardar en la base de datos
     if (!empty($nombre) && !empty($descripcion) && !empty($ingredientes) && !empty($preparacion)) {
         if ($controller->GuardarReceta($nombre, $descripcion, $preparacion, $ingredientes)) {
             $success_message = "¡Receta guardada con éxito!";
-            $prompt = $nombre;
+            $prompt = $nombre; // Mantengo el nombre en el campo de búsqueda
         } else {
             $error_message = "Error al guardar la receta";
         }
@@ -63,6 +71,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
 <head>
     <meta charset="UTF-8">
     <title>Buscar Receta</title>
+    <!-- Agrego Bootstrap para estilizar la interfaz -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
     <style>
@@ -79,6 +88,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     <div class="container">
         <h1 class="mt-4 text-center">Buscar Receta</h1>
 
+        <!-- Mensajes de error o éxito -->
         <?php if (!empty($error_message)): ?>
             <div class="alert alert-warning">
                 <?= htmlspecialchars($error_message) ?>
@@ -93,6 +103,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
 
         <div class="row justify-content-center">
             <div class="col-md-8">
+                <!-- Formulario para buscar una receta -->
                 <form method="POST" action="" class="mt-4 p-4 bg-white rounded shadow-sm">
                     <div class="form-group mb-3">
                         <label for="prompt" class="form-label">¿Qué receta buscas?</label>
@@ -101,6 +112,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                     <button type="submit" class="btn btn-primary w-100">Buscar</button>
                 </form>
 
+                <!-- Si se encontró o generó una receta, se muestra el formulario para guardarla -->
                 <?php if (!empty($nombre)): ?>
                     <form method="POST" action="" class="mt-4 p-4 bg-white rounded shadow-sm">
                         <input type="hidden" name="action" value="guardar">
@@ -126,7 +138,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
             </div>
         </div>
     </div>
+
+    <!-- Agrego Bootstrap para la funcionalidad de la UI -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- Script para expandir automáticamente los campos de texto al escribir -->
     <script>
         document.addEventListener("DOMContentLoaded", function() {
             document.querySelectorAll("textarea").forEach(textarea => {
@@ -145,6 +161,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
             textarea.style.height = textarea.scrollHeight + "px";
         }
     </script>
+
 </body>
 
 </html>
